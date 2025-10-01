@@ -6,19 +6,23 @@
 library(DBI)
 library(RSQLite)
 
-# Live debug (from the project root directory)
-db_path <- "./data/MTPDB_v1.25.24.sqlite"
-out_dir <- "./data/out"
+# --- Functions ----------------------------------------------------------------
 
+# --- Input Parsing ------------------------------------------------------------
 
+# Extract command-line arguments
+db_path <- commandArgs(trailingOnly = TRUE)[1]
+out_dir <- commandArgs(trailingOnly = TRUE)[2]
+
+# # Live debug (from the project root directory)
+# db_path <- "./data/MTPDB.sqlite"
+# out_dir <- "./data/in"
 
 # if (Sys.info()["sysname"] == "Windows") {
 #   # Can't access the DB directly on WSL when running from Windows...
 #   db_path <- file.path(Sys.getenv("USERPROFILE"), "Desktop", "MTPDB.sqlite")
 #   file.copy(from = "./data/MTPDB.sqlite", to = db_path)
 # }
-
-
 
 # Connect to the MTP-DB
 connection <- dbConnect(SQLite(), dbname = db_path)
@@ -43,12 +47,8 @@ query_pores <-
     
     ORDER BY gene_names.hugo_gene_symbol"
 
-
-
-
 # Make the calls
 pores <- dbGetQuery(connection, query_pores)
-
 
 # Extract Gene Symbols, combine, and save
 pores$hugo_gene_symbol |>
