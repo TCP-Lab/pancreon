@@ -17,6 +17,10 @@ source ./src/bash_commons.sh
 db_path="./data/MTPDB.sqlite"
 out_dir="./data/in"
 
+# --- The pipeline starts here -------------------------------------------------
+echo -e "\n${mag}STARTING GOI LIST ASSEMBLY${end}"
+echo -e "${mag}==========================${end}"
+
 # --- Extract the archive ------------------------------------------------------
 _extract_mtpdb "$db_path"
 
@@ -26,4 +30,10 @@ Rscript --vanilla "./src/make_geneset.R" \
     "$db_path" \
     "$out_dir"
 
-echo "DONE!"
+# --- The pipeline ends here ---------------------------------------------------
+if [[ $? -eq 0 ]]; then
+    echo -e "\n${mag}===============================${end}"
+    echo -e "${mag}PIPELINE COMPLETED SUCCESSFULLY\n${end}"
+else
+    echo -e "${red}\nPIPELINE FAILED${end}\n"
+fi
