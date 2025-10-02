@@ -3,9 +3,8 @@
 # --- Packages -----------------------------------------------------------------
 
 library(ggplot2)
-library(r4tcpl)
+#library(r4tcpl)
 library(dplyr, warn.conflicts = FALSE)
-#library(tidyr)
 
 # Function loading
 source("./src/util_functions.R")

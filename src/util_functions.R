@@ -181,5 +181,3 @@ profilePlot <- function(matrix_of_means, chart_type = "boxplot", thr = 1) {
         ylab(substitute(log[2]*(x+1), list(x = "TPM"))) +
         ggtitle(label = "Expression Profile Plot")
 }
-
-  
