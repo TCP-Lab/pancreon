@@ -17,10 +17,10 @@ expression_file <- commandArgs(trailingOnly = TRUE)[1]
 gois_file <- commandArgs(trailingOnly = TRUE)[2]
 out_dir <- commandArgs(trailingOnly = TRUE)[3]
 
-# Interactive debug (from the project root directory)
-expression_file <- "./data/in/pH_CountMatrix_genes_TPM.tsv"
-gois_file <- "./data/in/pore_set.csv"
-out_dir <- "./data/out"
+# # Interactive debug (from the project root directory)
+# expression_file <- "./data/in/pH_CountMatrix_genes_TPM.tsv"
+# gois_file <- "./data/in/pore_set.csv"
+# out_dir <- "./data/out"
 
 # --- Data Loading and Pre-processing ------------------------------------------
 
@@ -37,7 +37,6 @@ expression_matrix |> filter(SYMBOL %in% unlist(gois)) -> gois_expression
 group_labels <- c("Ctrl", "Acute", "Select")
 regex <- paste0("\\.(", paste(group_labels, collapse = "|"), ")$")
 gois_expression |> mutate(across(matches(regex), \(x){log2(x+1)})) -> gois_expression
-
 
 # --- Make Statistics ----------------------------------------------------------
 
