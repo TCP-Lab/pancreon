@@ -1,115 +1,17 @@
 
 
-
-# Borrowed from SeqLoader
-# Any named list knows the names of all the elements it contains (under its
-# 'names' attribute), but it doesn't know its own (even when it has one, e.g.,
-# because it is itself an element of a named list)! So, this function sets as
-# attribute for each element of a named list its own name (to access it later).
-set_own_names <- function(parent_list) {
-  names(parent_list) |> lapply(function(element_name) {
-    attr(parent_list[[element_name]], "own_name") <- element_name
-    return(parent_list[[element_name]])
-  }) |> setNames(names(parent_list)) # Also keep original names in parent list
-}
-
-# Compute threshold from count distribution
-threshold <- function(xSeries,
-                      all_names,
-                      adapt = threshold_adapt,
-                      thr_val = threshold_value,
-                      out_folder = out_dir)
-{
-  # Get series_ID and counter
-  series_ID <- attr(xSeries, "own_name")
-  item <- which(all_names == series_ID)
-  position <- paste0("[", item, "/", length(all_names), "]")
-  echo(paste("\nxSeries", position, series_ID), "yellow")
-  
-  # Adaptive expression threshold
-  if (adapt == "true") {
-    # Take the log2 of counts
-    only_counts <- log2(countMatrix(xSeries)[,-1] + 1)
-    # Find the expression threshold adaptively
-    # Filter the dataset by keeping only those genes that are detected in the
-    # majority of the samples, compute their average expression, then use that
-    # distribution of mean log-counts to fit the GMM.
-    gmm <- r4tcpl::GMM_divide(
-      rowMeans(only_counts)[rowSums(only_counts > 0) > N_selection(xSeries)/2],
-      G = thr_val)
-    # Set the new expression threshold as the right-most decision boundary
-    gmm$boundary[thr_val*(thr_val-1)/2] |> unname() -> thr
-    # Make density plots with GMM overlaid
-    r4tcpl::savePlots(
-      \(){
-        # Density curves
-        r4tcpl::count_density(only_counts,
-                              remove_zeros = TRUE,
-                              xlim = c(-1,10),
-                              col = "gray20",
-                              titles = c(paste0("Kernel Density Plot\n",
-                                                series_ID), ""))
-        # Plot the GMM
-        for (i in 1:thr_val) {
-          lines(gmm$x, gmm$components[,i], col="dodgerblue")
-        }
-        lines(gmm$x, rowSums(gmm$components), col="firebrick2")
-        # Plot the expression threshold
-        y_lim <- par("yaxp")[2]
-        lines(c(thr, thr), c(0, 1.5*y_lim), col="darkslategray", lty="dashed")
-        original_adj <- par("adj") # Store the original value of 'adj'
-        par(adj = 0) # Set text justification to left
-        text(x = thr + 0.3, y = 0.8*y_lim,
-             labels = paste("Decision Boundary =", round(thr, digits = 2)),
-             cex = 1.1)
-        par(adj = original_adj) # Restore the original 'adj' value
-      },
-      figure_Name = paste0(series_ID, "_threshold"),
-      figure_Folder = file.path(out_folder, series_ID))
-    # Reject threshold if too low (to be conservative)
-    if (thr < 1) {
-      cat("\nWARNING:\n Adaptive threshold from GMM returned",
-          round(thr, digits = 2), "...been coerced to 1.\n")
-      thr <- 1
-    } else {cat("\nAdaptive expression threshold set to: thr =", thr, "\n")}
-  } else {
-    # Fixed expression threshold (non-adaptive mode)
-    thr <- thr_val
-  }
-  return(thr)
-}
-
 # 'gois_stats' is supposed to be a data.frame with:
-#   - descriptive statistics about gene expression in a Series;
-#   - gene annotation columns featuring (at least) the 'SYMBOL' key;
-#   - the "own_name" character attribute of the associated Series;
-#   - the "metadata" data frame attribute about Runs participating in the stats.
+#   - descriptive stats on gene expression in 'Mean' and 'Std_Dev' columns;
+#   - a gene annotation columns featuring (at least) the 'SYMBOL' key;
 plot_barChart <- function(gois_stats,
+                          data_label,
                           y_limit,
                           border = FALSE,
-                          thr,
-                          out_folder)
+                          thr)
 {
   # Colors
   line_color <- "gray17"
   err_color <- "gray17"
-  
-  
-  # # Get series_ID, sample size, and average megareads per Run
-  # gois_stats |> attr("own_name") -> series_ID
-  # gois_stats |> attr("metadata") -> meta_table
-  # meta_table |> nrow() -> n
-  # if (meta_table |> hasName("read_count")) {
-  #   meta_table |> dplyr::select(read_count) |>
-  #     (\(z){colMeans(z)/1e6})() |> round(digits = 2) -> megareads
-  # } else {megareads <- NA}
-  # if (meta_table |> hasName("library_layout")) {
-  #   meta_table$library_layout[1] -> libLay
-  # } else {libLay <- NA}
-  # # Log Messages
-  # cat("xSeries ", series_ID, "... ", sep = "")
-  
-  
   # Prepare the Frame
   gg_frame <-
     ggplot(data = gois_stats,
@@ -125,9 +27,8 @@ plot_barChart <- function(gois_stats,
                        breaks = seq(0, y_limit, 0.5)) +
     xlab("Genes of Interest") +
     ylab(substitute(log[2]*(x+1), list(x = "TPM"))) +
-    # ggtitle(label = paste0(series_ID, " (n = ", n,
-    #                        ", depth = ", megareads, " MegaReads, ",
-    #                        libLay, " library) - GOI subset: ", family_name))
+    ggtitle(label = paste("Expressed Channelome in", data_label, "condition"))
+  
   # Draw the Bars
   if (border) {
     gg_bars <- geom_bar(stat = "identity", width = 0.7,
@@ -145,15 +46,10 @@ plot_barChart <- function(gois_stats,
                linetype = "dashed",
                color = line_color,
                linewidth = 1)
-  # Save the Chart
-  r4tcpl::savePlots(
-    \(){print(gg_thr)},
-    width_px = 2000,
-    figure_Name = "channelome_chart",
-    figure_Folder = out_folder)
   
-  cat("done\n")
+  return(gg_thr)
 }
+
 
 
 
