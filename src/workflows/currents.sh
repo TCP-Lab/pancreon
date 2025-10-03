@@ -12,7 +12,6 @@ out_path="./data/out/"
 
 # --- The pipeline starts here -------------------------------------------------
 echo -e "\n${mag}STARTING WHOLE-CELL CURRENT ANALYSIS${end}"
-echo -e "${mag} ====================================${end}"
 
 # Whole-cell current IV analysis in PANC-1 cell line
 echo "Running compare_ramps.R ..."
@@ -22,8 +21,7 @@ Rscript --vanilla "./src/compare_ramps.R" \
 
 # --- The pipeline ends here ---------------------------------------------------
 if [[ $? -eq 0 ]]; then
-    echo -e "\n${mag}===============================${end}"
-    echo -e "${mag}PIPELINE COMPLETED SUCCESSFULLY\n${end}"
+    echo -e "${mag}PIPELINE COMPLETED SUCCESSFULLY${end}"
 else
-    echo -e "${red}\nPIPELINE FAILED${end}\n"
+    echo -e "\n${red}PIPELINE FAILED${end}"
 fi

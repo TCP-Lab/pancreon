@@ -19,7 +19,7 @@ out_dir <- commandArgs(trailingOnly = TRUE)[3]
 # # Interactive debug (from the project root directory)
 # expression_file <- "./data/in/pH_CountMatrix_genes_TPM.tsv"
 # gois_file <- "./data/in/pore_set.csv"
-# out_dir <- "./data/out"
+# out_dir <- "./data/out/expression"
 
 # --- Data Loading and Pre-processing ------------------------------------------
 

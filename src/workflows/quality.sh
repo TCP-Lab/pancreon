@@ -8,13 +8,12 @@
 source ./src/bash_commons.sh
 
 in_path="./data/in/"
-out_path="./data/out/"
+out_path="./data/out/expression/"
 expression_matrix="pH_CountMatrix_genes_TPM.tsv"
 out_sub="QC"
 
 # --- The pipeline starts here -------------------------------------------------
 echo -e "\n${mag}STARTING DATA QUALITY CONTROL${end}"
-echo -e "${mag}=============================${end}"
 
 # Check x.FASTQ is properly installed
 if ! which x.fastq > /dev/null 2>&1; then
@@ -23,6 +22,11 @@ if ! which x.fastq > /dev/null 2>&1; then
     exit 1
 else
     echo "x.FASTQ found!"
+fi
+
+# Check if target directory exists
+if [ ! -d "$out_path" ]; then
+  mkdir -p "$out_path"
 fi
 
 # This cp is because qcfastq, by default, saves output in the same folder
@@ -37,8 +41,7 @@ mv "${log_file}" "${out_path}/${out_sub}/$(basename ${log_file})"
 
 # --- The pipeline ends here ---------------------------------------------------
 if [[ $? -eq 0 ]]; then
-    echo -e "${mag}===============================${end}"
     echo -e "${mag}PIPELINE COMPLETED SUCCESSFULLY${end}"
 else
-    echo -e "${red}\nPIPELINE FAILED${end}\n"
+    echo -e "\n${red}PIPELINE FAILED${end}"
 fi

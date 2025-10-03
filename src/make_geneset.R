@@ -59,10 +59,7 @@ pores$hugo_gene_symbol |>
               quote = FALSE,
               file = file.path(out_dir, "pore_set.csv"))
 
+cat("'pore_set.csv' saved to:", out_dir)
+
 # Disconnect from the MTP-DB
 dbDisconnect(connection)
-
-
-
-
-

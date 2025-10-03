@@ -17,4 +17,5 @@ kerblam data fetch
 kerblam run make_geneset
 kerblam run quality
 kerblam run profiler
+kerblam run currents
 ```
