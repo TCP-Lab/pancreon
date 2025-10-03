@@ -11,11 +11,12 @@ source("./src/util_functions.R")
 # --- Input Parsing ------------------------------------------------------------
 
 # Extract command-line arguments.
-out_dir <- commandArgs(trailingOnly = TRUE)[3]
+in_dir <- commandArgs(trailingOnly = TRUE)[1]
+out_dir <- commandArgs(trailingOnly = TRUE)[2]
 
-# Interactive debug (from the project root directory)
-in_dir <- "./data/in/patch"
-out_dir <- "./data/out"
+# # Interactive debug (from the project root directory)
+# in_dir <- "./data/in/patch"
+# out_dir <- "./data/out"
 
 # Create a named vector with the ending sample of each protocol phase
 # (i.e., duration of the Holding Potential in time samples, ad so on...)
@@ -25,7 +26,6 @@ proto <- c(holding = 32, pre = 533, ramp = 1532)
 
 # List all subfolders (each one = experiment)
 subfolders <- list.dirs(in_dir, full.names = TRUE, recursive = FALSE)
-
 
 # Loop over experiments (subfolders)
 for (exp_path in subfolders) {

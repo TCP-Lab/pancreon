@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ==============================================================================
-#? Makes the global set of ICTs of interest by querying the MTP-DB (v1.25.24)
+#? Channelome geneset build by querying the MTP-DB (v1.25.24)
 #?
 #? Transportome sub-setting is done according to the following criteria:
 #? - ICs: all (436)
