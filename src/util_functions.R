@@ -1,7 +1,8 @@
 
 
+
 # 'gois_stats' is supposed to be a data.frame with:
-#   - descriptive stats on gene expression in 'Mean' and 'Std_Dev' columns;
+#   - descriptive stats of gene expression in 'Mean' and 'Std_Dev' columns;
 #   - a gene annotation columns featuring (at least) the 'SYMBOL' key;
 plot_barChart <- function(gois_stats,
                           data_label,
@@ -50,12 +51,198 @@ plot_barChart <- function(gois_stats,
   return(gg_thr)
 }
 
+# This function returns expanded 'ylim' for better plotting, based on the
+# overall range of values of the input data frame and the 'increase' parameter:
+# 0.1 == +10% increase
+expand <- function(df, increase)
+{
+  # Total y span
+  df |> unlist() |> range() -> y_lims
+  delta <- y_lims[2] - y_lims[1]
+  
+  extra <- delta*increase
+  
+  return(c(y_lims[1]-extra, y_lims[2]+extra))
+}
+
+# Plot the Voltage Protocol (for a dataframe with 'Time' and 'Vm' columns)
+plot_voltage_protocol <- function(df, exp_id)
+{
+  plot(df$Time * 1e3, df$Vm,
+       type = "l",
+       lty = 1,
+       lwd = 2,
+       main = "Voltage Protocol",
+       xlab = "time (ms)",
+       ylab = "Vm (mV)")
+  mtext(paste("Experiment:", exp_id),
+        side = 3,
+        line = 0.5,
+        cex = 1)
+}
+
+# Plot all the current ramps in a dataframe, as a function of the 'Time' column.
+# 'proto' is a named vector with the ending sample of each protocol phase, in
+# particular a 'pre' and 'ramp' value, representing the beginning and the end of
+# the voltage sweep, respectively
+plot_full_ramps <- function(df, proto, exp_id)
+{
+  # Only currents
+  currents <- df[,-c(1,2)]
+  
+  # Magnify the ramp phase, with a 10% margin (cut the capacitive transients)
+  expand(currents[proto["pre"]:proto["ramp"],], increase = 0.1) -> y_lims
+  
+  # Make the plot
+  matplot(df$Time * 1e3, currents,
+          type = "l",
+          lty = 1,
+          lwd = 2,
+          col = rainbow(ncol(currents)),
+          ylim = y_lims,
+          main = "Current Ramps",
+          xlab = "time (ms)",
+          ylab = "Im (pA)")
+  mtext(paste("Experiment:", exp_id),
+        side = 3,
+        line = 0.5,
+        cex = 1)
+  legend("topright",
+         legend = colnames(currents),
+         col = rainbow(ncol(currents)),
+         lty = 1,
+         lwd = 2,
+         pch = 19)
+}
+
+# Plot the beginning of each ramp to analyze the average leakage current as a
+# function of the 'Time' column.
+# 'proto' is a named vector with the ending sample of each protocol phase, in
+# particular a 'holding' value, representing the end of the holding voltage.
+plot_holding_leakage <- function(df, proto, exp_id)
+{
+  # Only leakage currents
+  leak <- df[1:proto["holding"],-c(1,2)]
+  
+  # Magnify the leakage, with a 10% margin
+  expand(leak, increase = 0.1) -> y_lims
+  
+  # MAke the plot
+  old_par <- par() # Save current settings
+  par(mar = c(5, 4, 4, 12)) # Increase right margin to make room for the legend
+  matplot(df$Time[1:proto["holding"]] * 1e3, leak,
+          type = "l",
+          lty = 1,
+          lwd = 2,
+          col = rainbow(ncol(leak)),
+          ylim = y_lims,
+          main = "Leakage @ Holding Potential",
+          xlab = "time (ms)",
+          ylab = "Im (pA)")
+  mtext(paste("Experiment:", exp_id),
+        side = 3,
+        line = 0.5,
+        cex = 1)
+  legend("right",
+         legend = paste0(colnames(leak), ": ", round(colMeans(leak),1), " pA"),
+         text.font = 1,
+         y.intersp = 2,
+         col = rainbow(ncol(leak)),
+         lty = 1,
+         lwd = 2,
+         pch = 19,
+         inset = -0.3,
+         xpd = TRUE,
+         bty = "n")
+  # Restore all original settings
+  par(old_par) |> suppressWarnings()
+}
+
+# Plot the I-V curves of two conditions of interest, together with their
+# difference (a 'Vm' column is expected in the input dataframe 'df').
+# 'proto' is a named vector with the ending sample of each protocol phase, in
+# particular a 'pre' and 'ramp' value, representing the beginning and the end of
+# the voltage sweep, respectively.
+# 'cond' and 'ctrl' are the label of the conditions of interest used to select
+# columns from the input dataframe 'df'.
+plot_diff_IV <- function(df, proto, cond, ctrl, exp_id)
+{
+  # Cut across the ramp 
+  df_cut <- df[proto["pre"]:proto["ramp"],]
+  
+  # Compute the difference I-V
+  difference <- df_cut[[cond]] - df_cut[[ctrl]]
+  
+  # Make the plot
+  matplot(df_cut$Vm,
+          cbind(df_cut[[ctrl]], df_cut[[cond]], difference),
+          type = "l",
+          lty = 1,
+          lwd = c(2,2,3),
+          col = c("black", "blue", "red"),
+          main = paste("I-V Difference [", cond, "\u2212", ctrl, "]"), # \u2212 for minus sign
+          xlab = "Vm (mV)",
+          ylab = "Im (pA)")
+  mtext(paste("Experiment:", exp_id),
+        side = 3,
+        line = 0.5,
+        cex = 1)
+  lines(df_cut$Vm,
+        rep(0, length(df_cut$Time)),
+        col = "black",
+        lwd = 1,
+        lty = 2)
+  legend("topleft",
+         legend = c(ctrl, cond, "delta"),
+         col = c("black", "blue", "red"),
+         lty = 1,
+         lwd = 2,
+         pch = 19)
+}
+
+# Check if two vectors are equal to within an user-defined arbitrary error
+equal_to_within_err <- function(x, y, err = 1e-1)
+{
+  max(abs(x-y)) < err
+}
+
+# Test if all the ramps within a list have the same voltage protocol
+compatibility_test <- function(ramps,
+                               t_heading = "Time [s]",
+                               t_err = 1e-5,
+                               v_heading = "10_Vm [mV]",
+                               v_err = 1)
+{
+  err_msg <- "ERROR: Different voltage protocols detected!"
+  
+  # Check vector lengths
+  ramps |> sapply(\(ramp){
+    nrow(ramps[[1]]) == nrow(ramp)
+  }) |> all() -> test_out
+  if (!test_out) {cat(err_msg)}
+  
+  # Check time vectors
+  ramps |> sapply(\(ramp){
+    equal_to_within_err(ramps[[1]][[t_heading]],
+                        ramp[[t_heading]],
+                        err = t_err)
+  }) |> all() -> test_out
+  if (!test_out) {cat(err_msg)}
+  
+  # Check voltage vector
+  ramps |> sapply(\(ramp){
+    equal_to_within_err(ramps[[1]][[v_heading]],
+                        ramp[[v_heading]],
+                        err = v_err)
+  }) |> all() -> test_out
+  if (!test_out) {cat(err_msg)}
+}
 
 
 
 
 
-
+## --- Currently Unsued --------------------------------------------------------
 
 # Regenerate annotation from scratch
 add_annotation <- function(gene_matrix, OrgDb_key = "ENSEMBL") {

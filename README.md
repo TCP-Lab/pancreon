@@ -9,6 +9,7 @@ Channelome profiling in PANC-1 cell line
 - ggplot2 (>= 3.5.0)
 - dplyr (>= 1.1.4)
 - r4tcpl (>= 1.5.1)
+- readABF (>= 1.0.2)
 
 ## Run the analysis
 ```bash
