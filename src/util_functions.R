@@ -1,5 +1,9 @@
 
 
+# My colors
+nero <- "#05072b"
+blu <- "#1146cf"
+rosso <- "#de1620"
 
 # 'gois_stats' is supposed to be a data.frame with:
 #   - descriptive stats of gene expression in 'Mean' and 'Std_Dev' columns;
@@ -68,17 +72,27 @@ expand <- function(df, increase)
 # Plot the Voltage Protocol (for a dataframe with 'Time' and 'Vm' columns)
 plot_voltage_protocol <- function(df, exp_id)
 {
+  # Save current settings and fix margins
+  old_par <- par(no.readonly = TRUE)
+  par(mar = c(5.1, 5.5, 4.1, 2.5)) # c(bottom, left, top, right)
+  # Make the plot
   plot(df$Time * 1e3, df$Vm,
        type = "l",
        lty = 1,
        lwd = 2,
        main = "Voltage Protocol",
        xlab = "time (ms)",
-       ylab = "Vm (mV)")
+       ylab = substitute(V[m]*" "*(mV)),
+       cex.main = 2,      # Main title size
+       cex.lab = 1.5,     # Axis labels size
+       cex.axis = 1.2)    # Axis tick label size
+  # Add Subtitle
   mtext(paste("Experiment:", exp_id),
         side = 3,
-        line = 0.5,
-        cex = 1)
+        line = -1.5,
+        cex = 1.2)
+  # Restore original settings
+  par(old_par) |> suppressWarnings()
 }
 
 # Plot all the current ramps in a dataframe, as a function of the 'Time' column.
@@ -93,6 +107,9 @@ plot_full_ramps <- function(df, proto, exp_id)
   # Magnify the ramp phase, with a 10% margin (cut the capacitive transients)
   expand(currents[proto["pre"]:proto["ramp"],], increase = 0.1) -> y_lims
   
+  # Save current settings and fix margins
+  old_par <- par(no.readonly = TRUE)
+  par(mar = c(5.1, 5.5, 4.1, 2.5)) # c(bottom, left, top, right)
   # Make the plot
   matplot(df$Time * 1e3, currents,
           type = "l",
@@ -102,17 +119,25 @@ plot_full_ramps <- function(df, proto, exp_id)
           ylim = y_lims,
           main = "Current Ramps",
           xlab = "time (ms)",
-          ylab = "Im (pA)")
+          ylab = substitute(I[m]*" "*(pA)),
+          cex.main = 2,      # Main title size
+          cex.lab = 1.5,     # Axis labels size
+          cex.axis = 1.2)    # Axis tick label size
+  # Add Subtitle
   mtext(paste("Experiment:", exp_id),
         side = 3,
-        line = 0.5,
-        cex = 1)
+        line = -1.5,
+        cex = 1.2)
   legend("topright",
          legend = colnames(currents),
+         y.intersp = 1.5,
          col = rainbow(ncol(currents)),
          lty = 1,
          lwd = 2,
-         pch = 19)
+         pch = 19,
+         bty = "n")
+  # Restore original settings
+  par(old_par) |> suppressWarnings()
 }
 
 # Plot the beginning of each ramp to analyze the average leakage current as a
@@ -127,9 +152,10 @@ plot_holding_leakage <- function(df, proto, exp_id)
   # Magnify the leakage, with a 10% margin
   expand(leak, increase = 0.1) -> y_lims
   
-  # MAke the plot
-  old_par <- par() # Save current settings
-  par(mar = c(5, 4, 4, 12)) # Increase right margin to make room for the legend
+  # Make the plot
+  # Save current settings and fix margins (to make room for the legend)
+  old_par <- par(no.readonly = TRUE)
+  par(mar = c(5.1, 5.5, 4.1, 12)) # c(bottom, left, top, right)
   matplot(df$Time[1:proto["holding"]] * 1e3, leak,
           type = "l",
           lty = 1,
@@ -138,11 +164,15 @@ plot_holding_leakage <- function(df, proto, exp_id)
           ylim = y_lims,
           main = "Leakage @ Holding Potential",
           xlab = "time (ms)",
-          ylab = "Im (pA)")
+          ylab = substitute(I[m]*" "*(pA)),
+          cex.main = 2,      # Main title size
+          cex.lab = 1.5,     # Axis labels size
+          cex.axis = 1.2)    # Axis tick label size
+  # Add Subtitle
   mtext(paste("Experiment:", exp_id),
         side = 3,
-        line = 0.5,
-        cex = 1)
+        line = -1.5,
+        cex = 1.2)
   legend("right",
          legend = paste0(colnames(leak), ": ", round(colMeans(leak),1), " pA"),
          text.font = 1,
@@ -151,10 +181,10 @@ plot_holding_leakage <- function(df, proto, exp_id)
          lty = 1,
          lwd = 2,
          pch = 19,
-         inset = -0.3,
+         inset = -0.2,
          xpd = TRUE,
          bty = "n")
-  # Restore all original settings
+  # Restore original settings
   par(old_par) |> suppressWarnings()
 }
 
@@ -170,34 +200,64 @@ plot_diff_IV <- function(df, proto, cond, ctrl, exp_id)
   # Cut across the ramp 
   df_cut <- df[proto["pre"]:proto["ramp"],]
   
+  # Estimate reversal potential
+  rev_ctrl <- reversal_potential(df_cut$Vm, df_cut[[ctrl]], 5, exp_id)
+  rev_cond <- reversal_potential(df_cut$Vm, df_cut[[cond]], 5, exp_id)
+  
   # Compute the difference I-V
   difference <- df_cut[[cond]] - df_cut[[ctrl]]
   
+  # Save current settings and fix margins
+  old_par <- par(no.readonly = TRUE)
+  par(mar = c(5.1, 5.5, 4.1, 2.5)) # c(bottom, left, top, right)
   # Make the plot
   matplot(df_cut$Vm,
           cbind(df_cut[[ctrl]], df_cut[[cond]], difference),
           type = "l",
           lty = 1,
-          lwd = c(2,2,3),
-          col = c("black", "blue", "red"),
+          lwd = c(2, 2, 3),
+          col = c(nero, blu, rosso),
           main = paste("I-V Difference [", cond, "\u2212", ctrl, "]"), # \u2212 for minus sign
-          xlab = "Vm (mV)",
-          ylab = "Im (pA)")
+          xlab = substitute(V[m]*" "*(mV)),
+          ylab = substitute(I[m]*" "*(pA)),
+          cex.main = 2,      # Main title size
+          cex.lab = 1.5,     # Axis labels size
+          cex.axis = 1.2)    # Axis tick label size
+  # Add Reversal Potentials
+  usr <- par("usr") # Get plot limits, where usr[4] is the upper y-limit
+  text(rev_ctrl, usr[4]/5,
+       substitute(V[rev] == x*" "*mV, list(x = round(rev_ctrl,1))),
+       col = nero, cex = 1)
+  segments(rev_ctrl, usr[4]/50,
+           rev_ctrl, usr[4]/5 - usr[4]/35,
+           col = nero, lwd = 1, lty = 3)
+  text(rev_cond, usr[4]/3,
+       substitute(V[rev] == x*" "*mV, list(x = round(rev_cond,1))),
+       col = blu, cex = 1)
+  segments(rev_cond, usr[4]/50,
+           rev_cond, usr[4]/3 - usr[4]/30,
+           col = blu, lwd = 1, lty = 3)
+  # Add Subtitle
   mtext(paste("Experiment:", exp_id),
         side = 3,
-        line = 0.5,
-        cex = 1)
+        line = -1.5,
+        cex = 1.2)
   lines(df_cut$Vm,
         rep(0, length(df_cut$Time)),
         col = "black",
         lwd = 1,
-        lty = 2)
+        lty = 5)
   legend("topleft",
+         inset = 0.03,
          legend = c(ctrl, cond, "delta"),
-         col = c("black", "blue", "red"),
+         y.intersp = 1.5,
+         col = c(nero, blu, rosso),
          lty = 1,
          lwd = 2,
-         pch = 19)
+         pch = 19,
+         bty = "n")
+  # Restore original settings
+  par(old_par) |> suppressWarnings()
 }
 
 # Check if two vectors are equal to within an user-defined arbitrary error
@@ -238,8 +298,32 @@ compatibility_test <- function(ramps,
   if (!test_out) {cat(err_msg)}
 }
 
-
-
+# Fit the I-V curve with an n-degree polynomial and find the real root to
+# estimate the reversal potential
+reversal_potential <- function(x, y, n = 5, exp_id = NULL)
+{
+  # Fit an n-degree polynomial
+  model <- lm(y ~ poly(x, n, raw=TRUE))
+  
+  # For debug only
+  if (FALSE) {
+    # Predict at new points and plot
+    x_new <- seq(x[1], x[length(x)], length.out = 100)
+    y_pred <- predict(model, data.frame(x = x_new))
+    lines(x_new, y_pred, col="red")
+  }
+  
+  # Get coeeficients and find roots (zeroes)
+  model |> coef() |> polyroot() -> roots
+  # Keep only real roots
+  real_roots <- Re(roots[abs(Im(roots)) < 1e-8])
+  
+  if (length(real_roots) > 1) {
+    cat("WARNING: multiple roots detected in ", exp_id,
+        "... only one is shown!\n", sep = "")
+  }
+  return(real_roots[1])
+}
 
 
 ## --- Currently Unsued --------------------------------------------------------

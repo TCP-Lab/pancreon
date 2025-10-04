@@ -63,21 +63,21 @@ for (exp_path in subfolders) {
   # Plot the Voltage Protocol
   r4tcpl::savePlots(\(){
     plot_voltage_protocol(df, exp_id)},
-    width_px = 800,
+    width_px = 1000,
     figure_Name = "Voltage_Protocol",
     figure_Folder = file.path(out_dir, exp_id))
   
   # Plot Full Ramps in Time
   r4tcpl::savePlots(\(){
     plot_full_ramps(df, proto, exp_id)},
-    width_px = 800,
+    width_px = 1000,
     figure_Name = "All_Ramps",
     figure_Folder = file.path(out_dir, exp_id))
   
   # Plot Leakage under holding potential
   r4tcpl::savePlots(\(){
     plot_holding_leakage(df, proto, exp_id)},
-    width_px = 800,
+    width_px = 1000,
     figure_Name = "Holding_Leakage",
     figure_Folder = file.path(out_dir, exp_id))
   
@@ -108,7 +108,7 @@ for (exp_path in subfolders) {
     # Plot the I-V curves for the conditions of interest
     r4tcpl::savePlots(\(){
       plot_diff_IV(df, proto, cond, ctrl, exp_id)},
-      width_px = 800,
+      width_px = 1000,
       figure_Name = paste0("IV_", cond, "-", ctrl),
       figure_Folder = file.path(out_dir, exp_id))
   }
