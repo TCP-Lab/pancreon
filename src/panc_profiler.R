@@ -37,9 +37,14 @@ group_labels <- c("Ctrl", "Acute", "Select")
 regex <- paste0("\\.(", paste(group_labels, collapse = "|"), ")$")
 gois_expression |> mutate(across(matches(regex), \(x){log2(x+1)})) -> gois_expression
 
+# Samples to exclude based on PCA (to be moved in a JSON file of settings)
+exclude_samples <- c("PANC1.4.days.pH.6_6.7_5_R_TPM.Acute",
+                     "PANC1.pH.selected.17_R_TPM.Select")
+gois_expression |> select(!all_of(exclude_samples)) -> gois_expression
+
 # --- Make Statistics ----------------------------------------------------------
 
-# Parameter Settings
+# Parameter Settings (to be moved in a JSON file of settings)
 y_limit <- 10
 border <- FALSE
 thr <- 1

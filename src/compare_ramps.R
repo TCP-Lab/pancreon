@@ -32,6 +32,10 @@ for (exp_path in subfolders) {
   
   # List all ABF files in this experiment folder
   abf_files <- list.files(exp_path, pattern = "\\.abf$", full.names = TRUE)
+  if (length(abf_files) == 0) {
+    warning(paste("No ABF files found in", exp_path, "input directory."))
+    next
+  }
   
   # Get the experiment ID
   exp_id <- basename(exp_path)
