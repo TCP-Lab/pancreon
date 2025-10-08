@@ -10,6 +10,8 @@ Channelome profiling in PANC-1 cell line
 - dplyr (>= 1.1.4)
 - r4tcpl (>= 1.5.1)
 - readABF (>= 1.0.2)
+- RSQLite (>= 2.3.5)
+- DBI (>= 1.2.3)
 
 ## Run the analysis
 ```bash
